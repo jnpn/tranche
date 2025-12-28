@@ -85,7 +85,7 @@ class DSLRunner:
                 sys.exit(1)
 
         print("\nPipeline Complete.")
-        if os.path.exists(self.STATE_FILE): os.remove(self.STATE_FILE)
+        # if os.path.exists(self.STATE_FILE): os.remove(self.STATE_FILE)
 
     def unwind(self):
         if not os.path.exists(self.STATE_FILE):
