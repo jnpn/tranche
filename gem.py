@@ -134,8 +134,10 @@ def load_from_config():
         config = pyproject['glisse']
         order = config['order']
         branches = [Branch(b) for b in order]
-        functools.reduce(lambda b,c: b > c, branches)
-        #TODO: setup hooks
+        functools.reduce(lambda b, c: b > c, branches)
+        for branch in branches:
+            for hook in config[branch.name]["merged"]["hooks"]:
+                branch.when_merged(lambda ctx: os.system(hook))
         return branches
     except KeyError as e:
         print(f"config missing key {e}")
