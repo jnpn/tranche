@@ -10,17 +10,18 @@ import toml
 
 # --- eDSL Core ---
 
+
 class Branch:
     def __init__(self, name: str):
         self.name = name
         self.hooks: List[Callable] = []
-        self.next_branch: 'Optional[Branch]' = None
+        self.next_branch: "Optional[Branch]" = None
 
     def when_merged(self, func: Callable):
         self.hooks.append(func)
         return self
 
-    def __gt__(self, other: 'Branch'):
+    def __gt__(self, other: "Branch"):
         """Overloads the '>' operator to define order."""
         self.next_branch = other
         return other
@@ -28,13 +29,16 @@ class Branch:
     def __repr__(self):
         return f"Branch({self.name})"
 
+
 # --- State Persistence (Same Logic as Phase 1) ---
+
 
 @dataclass
 class MergeStep:
     target_branch: str
     original_sha: str
     tags_created: List[str] = field(default_factory=list)
+
 
 class DSLRunner:
     STATE_FILE = ".merge_state.json"
@@ -59,7 +63,7 @@ class DSLRunner:
         pipeline = self._get_pipeline()
 
         for i in range(len(pipeline) - 1):
-            src, tgt = pipeline[i], pipeline[i+1]
+            src, tgt = pipeline[i], pipeline[i + 1]
             print(f"\n>>> Merging {src.name} -> {tgt.name}")
 
             # Capture state
@@ -110,11 +114,18 @@ class DSLRunner:
         print("Unwind complete.")
 
     # Helpers
-    def _git(self, cmd): return subprocess.run(["git"] + cmd, check=True, capture_output=True, text=True)
-    def _get_sha(self, b): return self._git(["rev-parse", b]).stdout.strip()
-    def _get_tags(self): return set(self._git(["tag"]).stdout.splitlines())
+    def _git(self, cmd):
+        return subprocess.run(["git"] + cmd, check=True, capture_output=True, text=True)
+
+    def _get_sha(self, b):
+        return self._git(["rev-parse", b]).stdout.strip()
+
+    def _get_tags(self):
+        return set(self._git(["tag"]).stdout.splitlines())
+
 
 # --- User Script ---
+
 
 def test():
     dev = Branch("dev")
@@ -128,11 +139,12 @@ def test():
     main.when_merged(lambda ctx: os.system("echo 'Bump main version'"))
     return [dev, staging, main]
 
+
 def load_from_config():
     try:
         pyproject = toml.load("./pyproject.toml")
-        config = pyproject['glisse']
-        order = config['order']
+        config = pyproject["glisse"]
+        order = config["order"]
         branches = [Branch(b) for b in order]
         functools.reduce(lambda b, c: b > c, branches)
         for branch in branches:
