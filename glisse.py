@@ -1,12 +1,11 @@
-import os
 import sys
-import json
-import subprocess
-from dataclasses import dataclass, field, asdict
-from typing import List, Callable, Optional
-
 import functools
+import json
+import os
+import subprocess
 import tomllib
+from dataclasses import asdict, dataclass, field
+from typing import Callable, List, Optional
 
 # --- eDSL Core ---
 
@@ -156,14 +155,3 @@ def load_from_config():
         print(f"config missing key {e}")
     except FileNotFoundError as e:
         print(f"file not found {e}")
-
-
-if __name__ == "__main__":
-    branches = load_from_config()
-    assert len(branches) >= 1, f"must have at least one branch {branches}"
-    base = branches[0]
-    runner = DSLRunner(base)
-    if "--undo" in sys.argv:
-        runner.unwind()
-    else:
-        runner.execute()

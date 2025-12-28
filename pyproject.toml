@@ -23,5 +23,6 @@ hooks = [
 
 [dependency-groups]
 dev = [
+    "isort>=7.0.0",
     "ty>=0.0.7",
 ]
