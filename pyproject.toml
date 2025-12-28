@@ -20,3 +20,8 @@ hooks = [
       "bumpversion --tag",
       "date +%F",
 ]
+
+[dependency-groups]
+dev = [
+    "ty>=0.0.7",
+]

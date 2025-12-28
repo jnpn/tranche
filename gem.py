@@ -6,7 +6,7 @@ from dataclasses import dataclass, field, asdict
 from typing import List, Callable, Optional
 
 import functools
-import toml
+import tomllib
 
 # --- eDSL Core ---
 
@@ -142,7 +142,8 @@ def test():
 
 def load_from_config():
     try:
-        pyproject = toml.load("./pyproject.toml")
+        with open("./pyproject.toml", "rb") as fh:
+            pyproject = tomllib.load(fh)
         config = pyproject["glisse"]
         order = config["order"]
         branches = [Branch(b) for b in order]
