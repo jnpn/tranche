@@ -9,12 +9,13 @@ from typing import Callable, List, Optional
 
 # --- exceptions ---
 
+
 class GlisseConfigError:
     pass
 
+
 class GlisseConfigLoadingError:
     pass
-
 
 
 # --- eDSL Core ---
