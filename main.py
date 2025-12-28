@@ -1,6 +1,6 @@
 import sys
 
-from glisse import DSLRunner, load_from_config, show_config
+from glisse import DSLRunner
 
 """
 branch("dev") > transition() > branch("staging") > transition() > branch("main")
@@ -32,14 +32,8 @@ main.when_merged(lambda ctx: os.exec("bumpversion --tag"))
 
 
 def main():
-    # print("Hello from glisse!")
-    branches = load_from_config()
-    assert len(branches) >= 1, f"must have at least one branch {branches}"
-
-    show_config()
-
-    base = branches[0]
-    runner = DSLRunner(base)
+    runner = DSLRunner()
+    runner.show_config()
     if "--undo" in sys.argv:
         runner.unwind()
     else:

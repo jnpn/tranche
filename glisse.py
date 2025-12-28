@@ -50,14 +50,13 @@ class MergeStep:
     tags_created: List[str] = field(default_factory=list)
 
 
-STATE_FILE = ".merge_state.json"
-
-
 class DSLRunner:
-    STATE_FILE = STATE_FILE
+    CONFIG_FILE = "./pyproject.toml"
+    STATE_FILE = ".merge_state.json"
 
-    def __init__(self, start_node: Branch):
-        self.start_node = start_node
+    def __init__(self):
+        self.branches = self.load_from_config()
+        self.start_node = self.branches[0]
         self.history: List[MergeStep] = []
 
     def _get_pipeline(self) -> List[Branch]:
@@ -126,6 +125,45 @@ class DSLRunner:
         os.remove(self.STATE_FILE)
         print("Unwind complete.")
 
+    def show_config(self):
+        branches = self.branches  # load_from_config()
+        print("\t current branch: TODO")
+        print(f"\t order: {' > '.join(b.name for b in branches)}")
+        print("\t hooks: TODO")
+        if os.path.exists(self.STATE_FILE):
+            with open(self.STATE_FILE, "r") as f:
+                data = json.load(f)
+                steps = [MergeStep(**d) for d in data]
+                print("\t state:")
+                for step in steps:
+                    print(f"\t\t {step.original_sha} {step.target_branch}")
+
+    def load_from_config(self):
+        try:
+            with open(self.CONFIG_FILE, "rb") as fh:
+                pyproject = tomllib.load(fh)
+            config = pyproject["glisse"]
+            assert config is not None, (
+                "must have [glisse] node"
+            )  # TODO config schema validation
+            order = config["order"]
+            assert order is not None, "must have [glisse].order key"
+            assert len(order) >= 1, f"must have at least one branch {order}"
+            branches = [Branch(b) for b in order]
+            functools.reduce(lambda b, c: b > c, branches)
+            for branch in branches:
+                try:
+                    for hook in config[branch.name]["merged"]["hooks"]:
+                        branch.when_merged(lambda ctx: os.system(hook))
+                except KeyError:
+                    # no merge hook for branch
+                    pass
+            return branches
+        except KeyError as e:
+            raise GlisseConfigLoadingError(f"config missing key {e}")
+        except FileNotFoundError as e:
+            raise GlisseConfigLoadingError(f"file not found {e}")
+
     # Helpers
     def _git(self, cmd):
         return subprocess.run(["git"] + cmd, check=True, capture_output=True, text=True)
@@ -151,39 +189,3 @@ def test():
     staging.when_merged(lambda ctx: os.system("echo 'Bump staging version'"))
     main.when_merged(lambda ctx: os.system("echo 'Bump main version'"))
     return [dev, staging, main]
-
-
-def load_from_config():
-    try:
-        with open("./pyproject.toml", "rb") as fh:
-            pyproject = tomllib.load(fh)
-        config = pyproject["glisse"]
-        order = config["order"]
-        branches = [Branch(b) for b in order]
-        functools.reduce(lambda b, c: b > c, branches)
-        for branch in branches:
-            try:
-                for hook in config[branch.name]["merged"]["hooks"]:
-                    branch.when_merged(lambda ctx: os.system(hook))
-            except KeyError:
-                # no merge hook for branch
-                pass
-        return branches
-    except KeyError as e:
-        raise GlisseConfigLoadingError(f"config missing key {e}")
-    except FileNotFoundError as e:
-        raise GlisseConfigLoadingError(f"file not found {e}")
-
-
-def show_config():
-    branches = load_from_config()
-    print("\t current branch: TODO")
-    print(f"\t order: {' > '.join(b.name for b in branches)}")
-    print("\t hooks: TODO")
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r") as f:
-            data = json.load(f)
-            steps = [MergeStep(**d) for d in data]
-            print("\t state:")
-            for step in steps:
-                print(f"\t\t {step.original_sha} {step.target_branch}")
