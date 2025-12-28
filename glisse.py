@@ -49,8 +49,11 @@ class MergeStep:
     tags_created: List[str] = field(default_factory=list)
 
 
+STATE_FILE = ".merge_state.json"
+
+
 class DSLRunner:
-    STATE_FILE = ".merge_state.json"
+    STATE_FILE = STATE_FILE
 
     def __init__(self, start_node: Branch):
         self.start_node = start_node
@@ -161,7 +164,7 @@ def load_from_config():
             try:
                 for hook in config[branch.name]["merged"]["hooks"]:
                     branch.when_merged(lambda ctx: os.system(hook))
-            except KeyError as e:
+            except KeyError:
                 # no merge hook for branch
                 pass
         return branches
@@ -169,3 +172,15 @@ def load_from_config():
         raise GlisseConfigLoadingError(f"config missing key {e}")
     except FileNotFoundError as e:
         raise GlisseConfigLoadingError(f"file not found {e}")
+
+
+def show_config():
+    branches = load_from_config()
+    print("\t current branch: TODO")
+    print(f"\t order: {' > '.join(branches)}")
+    print("\t hooks: TODO")
+    if os.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            data = json.load(f)
+            steps = [MergeStep(**d) for d in data]
+    print(f"\t state: {steps}")
