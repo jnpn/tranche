@@ -7,6 +7,16 @@ import tomllib
 from dataclasses import asdict, dataclass, field
 from typing import Callable, List, Optional
 
+# --- exceptions ---
+
+class GlisseConfigError:
+    pass
+
+class GlisseConfigLoadingError:
+    pass
+
+
+
 # --- eDSL Core ---
 
 
@@ -148,10 +158,14 @@ def load_from_config():
         branches = [Branch(b) for b in order]
         functools.reduce(lambda b, c: b > c, branches)
         for branch in branches:
-            for hook in config[branch.name]["merged"]["hooks"]:
-                branch.when_merged(lambda ctx: os.system(hook))
+            try:
+                for hook in config[branch.name]["merged"]["hooks"]:
+                    branch.when_merged(lambda ctx: os.system(hook))
+            except KeyError as e:
+                # no merge hook for branch
+                pass
         return branches
     except KeyError as e:
-        print(f"config missing key {e}")
+        raise GlisseConfigLoadingError(f"config missing key {e}")
     except FileNotFoundError as e:
-        print(f"file not found {e}")
+        raise GlisseConfigLoadingError(f"file not found {e}")
