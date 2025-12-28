@@ -10,11 +10,11 @@ from typing import Callable, List, Optional
 # --- exceptions ---
 
 
-class GlisseConfigError:
+class GlisseConfigError(BaseException):
     pass
 
 
-class GlisseConfigLoadingError:
+class GlisseConfigLoadingError(BaseException):
     pass
 
 
@@ -178,10 +178,12 @@ def load_from_config():
 def show_config():
     branches = load_from_config()
     print("\t current branch: TODO")
-    print(f"\t order: {' > '.join(branches)}")
+    print(f"\t order: {' > '.join(b.name for b in branches)}")
     print("\t hooks: TODO")
-    if os.exists(STATE_FILE):
+    if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r") as f:
             data = json.load(f)
             steps = [MergeStep(**d) for d in data]
-    print(f"\t state: {steps}")
+            print("\t state:")
+            for step in steps:
+                print(f"\t\t {step.original_sha} {step.target_branch}")
