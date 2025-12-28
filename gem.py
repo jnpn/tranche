@@ -5,6 +5,9 @@ import subprocess
 from dataclasses import dataclass, field, asdict
 from typing import List, Callable, Dict
 
+import functools
+import toml
+
 # --- eDSL Core ---
 
 class Branch:
@@ -113,18 +116,38 @@ class DSLRunner:
 
 # --- User Script ---
 
-dev = Branch("dev")
-staging = Branch("staging")
-main = Branch("main")
+def test():
+    dev = Branch("dev")
+    staging = Branch("staging")
+    main = Branch("main")
 
-# The eDSL definition
-dev > staging > main
+    # The eDSL definition
+    dev > staging > main
 
-staging.when_merged(lambda ctx: os.system("echo 'Bump staging version'"))
-main.when_merged(lambda ctx: os.system("echo 'Bump main version'"))
+    staging.when_merged(lambda ctx: os.system("echo 'Bump staging version'"))
+    main.when_merged(lambda ctx: os.system("echo 'Bump main version'"))
+    return [dev, staging, main]
+
+def load_from_config():
+    try:
+        pyproject = toml.load("./pyproject.toml")
+        config = pyproject['glisse']
+        order = config['order']
+        branches = [Branch(b) for b in order]
+        functools.reduce(lambda b,c: b > c, branches)
+        #TODO: setup hooks
+        return branches
+    except KeyError as e:
+        print(f"config missing key {e}")
+    except FileNotFoundError as e:
+        print(f"file not found {e}")
+
 
 if __name__ == "__main__":
-    runner = DSLRunner(dev)
+    branches = load_from_config()
+    assert len(branches) >= 1, f"must have at least one branch"
+    base = branches[0]
+    runner = DSLRunner(base)
     if "--undo" in sys.argv:
         runner.unwind()
     else:
