@@ -3,7 +3,7 @@ import sys
 import json
 import subprocess
 from dataclasses import dataclass, field, asdict
-from typing import List, Callable, Dict
+from typing import List, Callable, Optional
 
 import functools
 import toml
@@ -15,7 +15,7 @@ class Branch:
     def __init__(self, name: str):
         self.name = name
         self.hooks: List[Callable] = []
-        self.next_branch: "Optional[Branch]" = None
+        self.next_branch: Optional[Branch] = None
 
     def when_merged(self, func: Callable):
         self.hooks.append(func)
@@ -159,7 +159,7 @@ def load_from_config():
 
 if __name__ == "__main__":
     branches = load_from_config()
-    assert len(branches) >= 1, f"must have at least one branch"
+    assert len(branches) >= 1, f"must have at least one branch {branches}"
     base = branches[0]
     runner = DSLRunner(base)
     if "--undo" in sys.argv:
