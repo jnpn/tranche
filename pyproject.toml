@@ -23,6 +23,8 @@ hooks = [
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.148.8",
     "isort>=7.0.0",
+    "pytest>=9.0.2",
     "ty>=0.0.7",
 ]
