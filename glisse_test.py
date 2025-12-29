@@ -1,4 +1,5 @@
-from glisse import Branch #, DSLRunner
+from glisse import Branch, DSLRunner
+
 
 def test_branch_order():
     """The `>` operator must order branches from left to right."""
@@ -9,3 +10,14 @@ def test_branch_order():
     print(dev, staging, main)
     assert dev.next_branch == staging, "assert dev > staging"
     assert staging.next_branch == main, "assert staging > main"
+
+
+def test_dsl_runner():
+    """The DSLRunner must start on branch passed."""
+    dev = Branch("dev")
+    staging = Branch("staging")
+    main = Branch("main")
+    _ = dev > staging > main
+    runner = DSLRunner(dev)
+    assert runner.start_node == dev
+    assert runner._get_pipeline() == [dev, staging, main]
